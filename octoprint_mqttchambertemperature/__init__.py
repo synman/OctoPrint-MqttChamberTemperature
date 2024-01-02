@@ -114,6 +114,7 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
         self._logger.debug("Received message for {topic}: {message}".format(**locals()))
+        self.last_chamber_temp = float(message) - 32.0 / 1.8
 
 
     def on_temperatures_received(self, comm, parsed_temps):
