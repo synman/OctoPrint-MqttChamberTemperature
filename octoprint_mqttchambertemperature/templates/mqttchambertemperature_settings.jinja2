@@ -29,12 +29,15 @@
 	</div>
 	<div class="content">
 		<h5><b>Settings</b></h5>
+
+		<label class="control-label">Subscribed Topic</label>
 		<div class="controls">
-			<label class="control-label">Subscribed Topic</label>
-			<div class="controls">
-					<input type="text" class="input-mini" style="width: 450px" data-bind="value: settings.plugins.mqttchambertemperature.mqttTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
-			</div>
-			<br/>
+				<input type="text" class="input-mini" style="width: 500px" data-bind="value: settings.plugins.mqttchambertemperature.mqttTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+		</div>
+
+		<br/>
+
+		<div class="controls">
 			<label class="checkbox">
 				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.convertFromFahrenheit"> Convert from Fahrenheit
 			</label>

@@ -48,6 +48,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         if helpers and "mqtt_subscribe" in helpers:
             self.mqtt_subscribe = helpers["mqtt_subscribe"]
             self.mqtt_subscribe(self.mqttTopic, self._on_mqtt_subscription)
+            self._logger.debug("on_after_startup: subscribed to [" + self.mqttTopic + "]")
         else:
             self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
                                                                             title="MQTT Chamber Temperature",
