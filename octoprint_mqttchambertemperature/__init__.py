@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Written by:  Shell M. Shrader (https://github.com/synman/OctoPrint-MqttChamberTemperature/archive/main.zip)
+# Written by:  Shell M. Shrader (*)
 # Copyright [2024] [Shell M. Shrader]
 
 from __future__ import absolute_import
@@ -114,7 +114,7 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
         self._logger.debug("Received message for {topic}: {message}".format(**locals()))
-        self.last_chamber_temp = float(message) - 32.0 / 1.8
+        self.last_chamber_temp = (float(message) - 32.0) / 1.8
 
 
     def on_temperatures_received(self, comm, parsed_temps):
