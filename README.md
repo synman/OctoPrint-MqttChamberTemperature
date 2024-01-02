@@ -8,14 +8,8 @@
 
 ## Screenshots
 
-![](https://user-images.githubusercontent.com/1299716/147965674-d2a203d7-dc21-4e19-bcaa-9cef05007cae.png)
+<img width="430" alt="Screenshot 2024-01-02 at 3 33 09 AM" src="https://github.com/synman/OctoPrint-MqttChamberTemperature/assets/1299716/f483b6dc-27bd-4d91-a873-d530db5e4fd8">
+ 
+<img width="986" alt="Screenshot 2024-01-02 at 3 32 49 AM" src="https://github.com/synman/OctoPrint-MqttChamberTemperature/assets/1299716/1d2d5f69-cae6-4d78-824b-feabee421490">
 
-![](https://user-images.githubusercontent.com/1299716/147965814-58f87eb9-4d41-4061-964e-a2517012f900.png)
-
-![](https://user-images.githubusercontent.com/1299716/147965811-c8b890ec-7d98-4ee1-a82b-b1472a0ec933.png)
-
-![](https://user-images.githubusercontent.com/1299716/68447249-4b266980-01ad-11ea-8712-f1bb9b45deb4.png)
-
-![](https://user-images.githubusercontent.com/1299716/68447254-4eb9f080-01ad-11ea-925f-5ee540fae35e.png)
-
-![](https://user-images.githubusercontent.com/1299716/147916286-cfd84110-21fd-4bed-852b-800aad2cc897.png)
+<img width="979" alt="Screenshot 2024-01-02 at 3 43 44 AM" src="https://github.com/synman/OctoPrint-MqttChamberTemperature/assets/1299716/1821aa91-7a85-47df-83b0-00495e3a1d13">
