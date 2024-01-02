@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Written by:  Shell M. Shrader (https://github.com/synman/Octoprint-Bettergrblsupport)
+# Written by:  Shell M. Shrader (https://github.com/synman/OctoPrint-MqttChamberTemperature/archive/main.zip)
 # Copyright [2024] [Shell M. Shrader]
 
 from __future__ import absolute_import
@@ -20,7 +20,7 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def __init__(self): 
         self.settingsVersion = 1
-        self.mqttTopic = "aha/7368745f6f7574646f6f72735f73656e736f72/sht_outdoors_sensor_sht30_temperature_sensor/stat_t"
+        self.mqttTopic = ""
         self.polling_interval = 30
 
         self.repeated_timer = None
@@ -35,7 +35,7 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("__init__: get_settings_defaults")
 
         return dict(
-            mqttTopic = ""
+            mqttTopic = "aha/7368745f6f7574646f6f72735f73656e736f72/sht_outdoors_sensor_sht30_temperature_sensor/stat_t"
         )
 
 
