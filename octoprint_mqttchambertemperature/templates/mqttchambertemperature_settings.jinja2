@@ -1,0 +1,44 @@
+<style>
+	.body {
+	  padding: 0;
+	  margin: 0;
+	}
+
+	.wrapper {
+	  display: flex;
+	  flex-direction: column;
+	  height: 100vh;
+	}
+
+	.header {
+	  position:relative;
+	  flex: 0 0 auto;
+	}
+
+	.content {
+	  overflow-y:scroll;
+	  flex: 0 1 auto;
+	}
+</style>
+
+<form class="form-horizontal">
+<div class="wrapper">
+	<div class="header">
+		<h4>MQTT Chamber Temperature</h4>
+		<hr>
+	</div>
+	<div class="content">
+		<h5><b>Settings</b></h5>
+		<div class="controls">
+			<label class="control-label">Subscribed Topic</label>
+			<div class="controls">
+					<input type="text" class="input-mini" data-bind="value: settings.plugins.mqttchambertemperature.mqttTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+			</div>
+			<br/>
+			<label class="checkbox">
+				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.convertFromFahrenheit"> Convert from Fahrenheit
+			</label>
+		</div>	
+	</div>
+</div>
+</form>

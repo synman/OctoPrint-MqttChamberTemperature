@@ -18,7 +18,7 @@ plugin_version = "0.0.1"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """Enables Chamber temperature reporting via monitoring an MQTT topic"""
+plugin_description = """Enables Chamber temperature reporting via subscribing to an MQTT topic"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "Shell M. Shrader"
@@ -27,7 +27,7 @@ plugin_author = "Shell M. Shrader"
 plugin_author_email = "shell@shellware.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/synman/OctoPrint-MQTT-Chamber"
+plugin_url = "https://github.com/synman/OctoPrint-MqttChamberTemperature"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "WTFPL"

@@ -1,18 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Written by:  Shell M. Shrader (*)
-# Copyright [2024] [Shell M. Shrader]
+# Written by:  Shell M. Shrader (https://github.com/synman/OctoPrint-MqttChamberTemperature/archive/main.zip)
+# Copyright [2024] [Shell M. Shrader] - WTFPL
 
 from __future__ import absolute_import
 from pydoc import Helper
 from octoprint.events import Events
-from octoprint.util import RepeatedTimer
 
 import octoprint.plugin
 
 
-class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
+class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
+                              octoprint.plugins.TemplatePlugin,
+                              octoprint.plugins.AssetPlugin,
                               octoprint.plugin.SimpleApiPlugin,
                               octoprint.plugin.StartupPlugin,
                               octoprint.plugin.EventHandlerPlugin,
@@ -20,50 +21,41 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def __init__(self): 
         self.settingsVersion = 1
-        self.mqttTopic = ""
-        self.polling_interval = 30
 
-        self.repeated_timer = None
+        self.mqtt_subscribe = None
         self.last_chamber_temp = 0.0
 
-        self.mqtt_publish = None
-        self.mqtt_subscribe = None
-        self.mqtt_unsubscribe = None
+        self.mqttTopic = ""
+        self.convertFromFahrenheit = False
 
     # #~~ SettingsPlugin mixin
     def get_settings_defaults(self):
         self._logger.debug("__init__: get_settings_defaults")
 
         return dict(
-            mqttTopic = "aha/7368745f6f7574646f6f72735f73656e736f72/sht_outdoors_sensor_sht30_temperature_sensor/stat_t"
+            mqttTopic = "aha/7368745f6f7574646f6f72735f73656e736f72/sht_outdoors_sensor_sht30_temperature_sensor/stat_t",
+            convertFromFahrenheit = False
         )
-
 
     def on_after_startup(self):
         self._logger.debug("__init__: on_after_startup")
+
         self.mqttTopic = self._settings.get(["mqttTopic"])
+        self.convertFromFahrenheit = int(self._settings.get(["convertFromFahrenheit"]))
 
-        helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe", "mqtt_unsubscribe")
+        helpers = self._plugin_manager.get_helpers("mqtt_subscribe")
 
-        if helpers:
-            if "mqtt_subscribe" in helpers:
-                self.mqtt_subscribe = helpers["mqtt_subscribe"]
-                self.mqtt_subscribe(self.mqttTopic, self._on_mqtt_subscription)
-            # if "mqtt_publish" in helpers:
-            #     self.mqtt_publish = helpers["mqtt_publish"]
-            #     self.mqtt_publish("octoprint/plugin/tasmota", "OctoPrint-TasmotaMQTT publishing.")
-            #     if any(map(lambda r: r["event_on_startup"] == True, self._settings.get(["arrRelays"]))):
-            #         for relay in self._settings.get(["arrRelays"]):
-            #             self._tasmota_mqtt_logger.debug("powering on {} due to startup.".format(relay["topic"]))
-            #             self.turn_on(relay)
-            if "mqtt_unsubscribe" in helpers:
-                self.mqtt_unsubscribe = helpers["mqtt_unsubscribe"]
+        if helpers and "mqtt_subscribe" in helpers:
+            self.mqtt_subscribe = helpers["mqtt_subscribe"]
+            self.mqtt_subscribe(self.mqttTopic, self._on_mqtt_subscription)
         else:
-            self._plugin_manager.send_plugin_message(self._identifier, dict(noMQTT=True))
+            self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
+                                                                            title="MQTT Chamber Temperature",
+                                                                            text="Unable to subscribe the MQTT topic.",
+                                                                            hide=True,
+                                                                            delay=10000,
+                                                                            notify_type="notice"))
             return
-
-        # self.repeated_timer = RepeatedTimer(self.polling_interval, self.get_chamber_temperature)
-        # self.repeated_timer.start()
 
 
     def get_settings_version(self):
@@ -77,35 +69,38 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_settings_save(self, data):
         self._logger.debug("__init__: on_settings_save data=[{}]".format(data))
+        self._logger.debug("saving settings")
+        octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
 
-    # # #~~ AssetPlugin mixin
-    # def get_assets(self):
-    #     self._logger.debug("__init__: get_assets")
+    # #~~ AssetPlugin mixin
+    def get_assets(self):
+        self._logger.debug("__init__: get_assets")
 
-    #     # Define your plugin's asset files to automatically include in the
-    #     # core UI here.
-    #     return dict(js=['js/bettergrblsupport.js', 'js/bettergrblsupport_settings.js', 'js/bgs_framing.js', 
-    #                     'js/bettergrblsupport_wizard.js', 'js/bgs_terminal.js'],
-    #                 css=['css/bettergrblsupport.css', 'css/bettergrblsupport_settings.css', 'css/bgs_framing.css'],
-    #                 less=['less/bettergrblsupport.less', "less/bettergrblsupport.less", "less/bgs_framing.less"])
+        # Define your plugin's asset files to automatically include in the
+        # core UI here.
+        return dict(js=['js/mqttchambertemperature_settings.js'],
+                    css=['css/mqttchambertemperature_settings.css'],
+                    less=['less/mqttchambertemperature_settings.less'])
 
 
-    # # #~~ TemplatePlugin mixin
-    # def get_template_configs(self):
-    #     self._logger.debug("__init__: get_template_configs")
+    # #~~ TemplatePlugin mixin
+    def get_template_configs(self):
+        self._logger.debug("__init__: get_template_configs")
 
-    #     return [
-    #         {
-    #                 "type": "settings",
-    #                 "template": "bettergrblsupport_settings.jinja2",
-    #                 "custom_bindings": True
-    #         }
-    #     ]
+        return [
+            {
+                    "type": "settings",
+                    "template": "mqttchambertemperature_settings.jinja2",
+                    "custom_bindings": True
+            }
+        ]
+
 
     # #-- EventHandlerPlugin mix-in
     def on_event(self, event, payload):
         pass
+
 
     # ~ SimpleApiPlugin
     def on_api_get(self, request):
@@ -119,7 +114,7 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_temperatures_received(self, comm, parsed_temps):
         chamber = dict()
-        chamber["C"] = (self.last_chamber_temp, None)
+        chamber["C"] = (self.last_chamber_temp, 0.0)
         parsed_temps.update(chamber)
         return parsed_temps
 
@@ -132,7 +127,7 @@ __plugin_pythoncompat__ = ">=2.7,<4"
 
 def __plugin_load__():
     global __plugin_implementation__
-    __plugin_implementation__ = MQTTChamberTempPlugin()
+    __plugin_implementation__ = MqttChamberTempPlugin()
 
     global __plugin_hooks__
     __plugin_hooks__ = \
