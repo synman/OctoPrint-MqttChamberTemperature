@@ -43,7 +43,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.mqttTopic = self._settings.get(["mqttTopic"])
         self.convertFromFahrenheit = int(self._settings.get(["convertFromFahrenheit"]))
 
-        helpers = self._plugin_manager.get_helpers("mqtt_subscribe")
+        helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_subscribe")
 
         if helpers and "mqtt_subscribe" in helpers:
             self.mqtt_subscribe = helpers["mqtt_subscribe"]
@@ -110,10 +110,16 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
         self._logger.debug("Received message for {topic}: {message}".format(**locals()))
-        self.last_chamber_temp = (float(message) - 32.0) / 1.8
+        temperature = float(message)
+
+        if self.convertFromFahrenheit:
+            temperature = (temperature - 32.0) / 1.8
+
+        self.last_chamber_temp = temperature
 
 
     def on_temperatures_received(self, comm, parsed_temps):
+        self._logger.debug("on_temperatures_received")
         chamber = dict()
         chamber["C"] = (self.last_chamber_temp, 0.0)
         parsed_temps.update(chamber)
