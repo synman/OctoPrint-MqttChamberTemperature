@@ -49,17 +49,18 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         if helpers:
             if "mqtt_subscribe" in helpers:
                 if self.mqtt_subscribe is None: self.mqtt_subscribe = helpers["mqtt_subscribe"]
-                try:
-                    self.mqtt_subscribe(self.mqttTopic, self.on_mqtt_subscription)
-                    self._logger.debug("subscribed to [" + self.mqttTopic + "]")
-                except Exception as e:
-                    self._logger.warn("unable to subscribe to [" + self.mqttTopic + "]")
-                    self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
-                                                                                    title="MQTT Chamber Temperature",
-                                                                                    text="Unable to subscribe to [" + self.mqttTopic + "].",
-                                                                                    hide=True,
-                                                                                    delay=10000,
-                                                                                    notify_type="notice"))
+                if self.mqttTopic != "":
+                    try:
+                        self.mqtt_subscribe(self.mqttTopic, self.on_mqtt_subscription)
+                        self._logger.debug("subscribed to [" + self.mqttTopic + "]")
+                    except Exception as e:
+                        self._logger.warn("unable to subscribe to [" + self.mqttTopic + "]")
+                        self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
+                                                                                        title="MQTT Chamber Temperature",
+                                                                                        text="Unable to subscribe to [" + self.mqttTopic + "].",
+                                                                                        hide=True,
+                                                                                        delay=10000,
+                                                                                        notify_type="notice"))
             if "mqtt_unsubscribe" in helpers and self.mqtt_unsubscribe is None:
                 self.mqtt_unsubscribe = helpers["mqtt_unsubscribe"]
                 self._logger.debug("unsubscribe registered")
@@ -91,9 +92,9 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("saving settings")
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-        # release our subscribtion and reload our config
-        if self.mqtt_unsubscribe: 
-            self.mqtt_unsubscribe(self.mqttTopic)
+        # release our subscription and reload our config
+        if self.mqtt_unsubscribe and self.mqttTopic != "": 
+            self.mqtt_unsubscribe(self.on_mqtt_subscription)
             self._logger.debug("unsubscribed from [" + self.mqttTopic + "]")
 
         self.on_after_startup()
