@@ -12,8 +12,8 @@ import octoprint.plugin
 
 
 class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
-                              octoprint.plugins.TemplatePlugin,
-                              octoprint.plugins.AssetPlugin,
+                              octoprint.plugin.TemplatePlugin,
+                              octoprint.plugin.AssetPlugin,
                               octoprint.plugin.SimpleApiPlugin,
                               octoprint.plugin.StartupPlugin,
                               octoprint.plugin.EventHandlerPlugin,
