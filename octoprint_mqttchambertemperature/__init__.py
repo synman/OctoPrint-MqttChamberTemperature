@@ -47,10 +47,8 @@ class MQTTChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
         if helpers:
             if "mqtt_subscribe" in helpers:
-               self.mqtt_subscribe = helpers["mqtt_subscribe"]
-               for relay in self._settings.get(["arrRelays"]):
-                #    self._tasmota_mqtt_logger.debug(self.generate_mqtt_full_topic(relay, "stat"))
-                   self.mqtt_subscribe(self.mqttTopic, self._on_mqtt_subscription)
+                self.mqtt_subscribe = helpers["mqtt_subscribe"]
+                self.mqtt_subscribe(self.mqttTopic, self._on_mqtt_subscription)
             # if "mqtt_publish" in helpers:
             #     self.mqtt_publish = helpers["mqtt_publish"]
             #     self.mqtt_publish("octoprint/plugin/tasmota", "OctoPrint-TasmotaMQTT publishing.")
