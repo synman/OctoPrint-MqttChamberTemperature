@@ -23,6 +23,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.settingsVersion = 1
 
         self.mqtt_subscribe = None
+        self.mqtt_unsubscribe = None
         self.last_chamber_temp = 0.0
 
         self.mqttTopic = ""
@@ -33,7 +34,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("__init__: get_settings_defaults")
 
         return dict(
-            mqttTopic = "aha/7368745f6f7574646f6f72735f73656e736f72/sht_outdoors_sensor_sht30_temperature_sensor/stat_t",
+            mqttTopic = "",
             convertFromFahrenheit = False
         )
 
@@ -43,13 +44,18 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.mqttTopic = self._settings.get(["mqttTopic"])
         self.convertFromFahrenheit = self._settings.get_boolean(["convertFromFahrenheit"])
 
-        helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_subscribe")
+        helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_subscribe", "mqtt_unsubscribe")
 
-        if helpers and "mqtt_subscribe" in helpers:
-            self.mqtt_subscribe = helpers["mqtt_subscribe"]
-            self.mqtt_subscribe(self.mqttTopic, self.on_mqtt_subscription)
-            self._logger.debug("on_after_startup: subscribed to [" + self.mqttTopic + "]")
-        else:
+        if helpers:
+            if "mqtt_subscribe" in helpers:
+                self.mqtt_subscribe = helpers["mqtt_subscribe"]
+                self.mqtt_subscribe(self.mqttTopic, self.on_mqtt_subscription)
+                self._logger.debug("subscribed to [" + self.mqttTopic + "]")
+            if "mqtt_unsubscribe" in helpers:
+                self.mqtt_unsubscribe = helpers["mqtt_unsubscribe"]
+                self._logger.debug("unsubscribe registered")
+
+        if self.mqtt_subscribe is None or self.mqtt_unsubscribe is None:
             self._logger.warn("on_after_startup: unable to subscribe to [" + self.mqttTopic + "]")
 
             # need to rethink this
@@ -75,6 +81,13 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("__init__: on_settings_save data=[{}]".format(data))
         self._logger.debug("saving settings")
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+
+        # release our subscribtion and reload our config
+        if self.mqtt_unsubscribe: 
+            self.mqtt_unsubscribe(self.mqttTopic)
+            self._logger.debug("unsubscribed from [" + self.mqttTopic + "]")
+
+        self.on_after_startup()
 
 
     # #~~ AssetPlugin mixin

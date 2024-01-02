@@ -4,7 +4,6 @@
 * Requires the [MQTT](https://plugins.octoprint.org/plugins/mqtt/) Plugin to be installed and configured
 * Subcribed topic configurable via Plugin Settings
 * Can convert retrieved temperature to Celcius if provided in Fahrenheit
-* OctoPrint must be restarted for configuration changes to take effect
 
 ## Screenshots
 
