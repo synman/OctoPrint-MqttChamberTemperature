@@ -41,15 +41,18 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("__init__: on_after_startup")
 
         self.mqttTopic = self._settings.get(["mqttTopic"])
-        self.convertFromFahrenheit = int(self._settings.get(["convertFromFahrenheit"]))
+        self.convertFromFahrenheit = self._settings.get_boolean(["convertFromFahrenheit"])
 
         helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_subscribe")
 
         if helpers and "mqtt_subscribe" in helpers:
             self.mqtt_subscribe = helpers["mqtt_subscribe"]
-            self.mqtt_subscribe(self.mqttTopic, self._on_mqtt_subscription)
+            self.mqtt_subscribe(self.mqttTopic, self.on_mqtt_subscription)
             self._logger.debug("on_after_startup: subscribed to [" + self.mqttTopic + "]")
         else:
+            self._logger.warn("on_after_startup: unable to subscribe to [" + self.mqttTopic + "]")
+
+            # need to rethink this
             self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
                                                                             title="MQTT Chamber Temperature",
                                                                             text="Unable to subscribe the MQTT topic.",
@@ -108,7 +111,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         return "this space intentionally left blank (for now)\n"
 
 
-    def _on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
+    def on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
         self._logger.debug("Received message for {topic}: {message}".format(**locals()))
         temperature = float(message)
 
@@ -125,9 +128,33 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         parsed_temps.update(chamber)
         return parsed_temps
 
-# If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
-# ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
-# can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
+
+    def get_update_information(self):
+        return dict(
+            mqttchambertemperature=dict(
+                displayName="MQTT Chamber Temperature",
+                displayVersion=self._plugin_version,
+
+                type='github_release',
+                user='synman',
+                repo='OctoPrint-MqttChamberTemperature',
+                current=self._plugin_version,
+                stable_branch={
+                        "name": "Stable",
+                        "branch": "main",
+                        "commitish": ["main"],
+                    },
+                prerelease_branches=[
+                        {
+                            "name": "Release Candidate",
+                            "branch": "rc",
+                            "commitish": ["rc", "main"],
+                        }
+                    ],
+                pip='https://github.com/synman/OctoPrint-MqttChamberTemperature/archive/{target_version}.zip'
+            )
+        )
+    
 
 __plugin_name__ = 'MQTT Chamber Temperature'
 __plugin_pythoncompat__ = ">=2.7,<4"
@@ -138,4 +165,5 @@ def __plugin_load__():
 
     global __plugin_hooks__
     __plugin_hooks__ = \
-        {"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.on_temperatures_received }
+        { "octoprint.comm.protocol.temperatures.received": __plugin_implementation__.on_temperatures_received,
+          "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information }
