@@ -20,52 +20,97 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
                               octoprint.plugin.RestartNeedingPlugin):
 
     def __init__(self): 
-        self.settingsVersion = 1
+        self.settingsVersion = 2
 
+        self.mqtt_publish = None
         self.mqtt_subscribe = None
         self.mqtt_unsubscribe = None
-        self.last_chamber_temp = 0.0
 
-        self.mqttTopic = ""
+        self.last_chamber_temp = 0.0
+        self.last_chamber_temp_target = 0.0
+        self.last_chamber_state = ""
+
+        self.mqttTempTopic = ""
+        self.mqttStateTopic = ""
+        self.mqttRequestedStateTopic = ""
+
         self.convertFromFahrenheit = False
+
+        self.controlHeater = False
+        self.heaterHysteresis = 0.0
+        self.oneShotHeating = False
+
+        self.stateOnValue = ""
+        self.stateOffValue = ""
 
     # #~~ SettingsPlugin mixin
     def get_settings_defaults(self):
         self._logger.debug("__init__: get_settings_defaults")
 
         return dict(
-            mqttTopic = "",
-            convertFromFahrenheit = False
+            mqttTempTopic = "",
+            mqttStateTopic = "",
+            mqttRequestedStateTopic = "",
+            convertFromFahrenheit = False,
+            controlHeater = False,
+            heaterHysteresis = 1.0,
+            oneShotHeating = False,
+            stateOnValue = "on",
+            stateOffValue = "off"
         )
 
     def on_after_startup(self):
         self._logger.debug("__init__: on_after_startup")
 
-        self.mqttTopic = self._settings.get(["mqttTopic"])
+        self.mqttTempTopic = self._settings.get(["mqttTempTopic"])
+        self.mqttStateTopic = self._settings.get(["mqttStateTopic"])
+        self.mqttRequestedStateTopic = self._settings.get(["mqttRequestedStateTopic"])
         self.convertFromFahrenheit = self._settings.get_boolean(["convertFromFahrenheit"])
 
-        helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_subscribe", "mqtt_unsubscribe")
+        self.controlHeater =  self._settings.get_boolean(["controlHeater"])
+        self.heaterHysteresis = self._settings.get_float(["heaterHysteresis"])
+        self.oneShotHeating = self._settings.get_boolean(["oneShotHeating"])
+
+        self.stateOnValue = self._settings.get(["stateOnValue"])
+        self.stateOffValue = self._settings.get(["stateOffValue"])
+
+        helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe", "mqtt_unsubscribe")
 
         if helpers:
+            if "mqtt_publish" in helpers and self.mqtt_publish is None:
+                self.mqtt_publish = helpers["mqtt_publish"]
+                self._logger.debug("mqtt_publish registered")
             if "mqtt_subscribe" in helpers:
                 if self.mqtt_subscribe is None: self.mqtt_subscribe = helpers["mqtt_subscribe"]
-                if self.mqttTopic != "":
+                if self.mqttTempTopic != "":
                     try:
-                        self.mqtt_subscribe(self.mqttTopic, self.on_mqtt_subscription)
-                        self._logger.debug("subscribed to [" + self.mqttTopic + "]")
+                        self.mqtt_subscribe(self.mqttTempTopic, self.on_mqtt_subscription)
+                        self._logger.debug("subscribed to [" + self.mqttTempTopic + "]")
                     except Exception as e:
-                        self._logger.warn("unable to subscribe to [" + self.mqttTopic + "]")
+                        self._logger.warn("unable to subscribe to [" + self.mqttTempTopic + "]")
                         self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
                                                                                         title="MQTT Chamber Temperature",
-                                                                                        text="Unable to subscribe to [" + self.mqttTopic + "].",
+                                                                                        text="Unable to subscribe to [" + self.mqttTempTopic + "].",
+                                                                                        hide=True,
+                                                                                        delay=10000,
+                                                                                        notify_type="notice"))
+                if self.controlHeater and self.mqttStateTopic != "":
+                    try:
+                        self.mqtt_subscribe(self.mqttStateTopic, self.on_mqtt_subscription)
+                        self._logger.debug("subscribed to [" + self.mqttStateTopic + "]")
+                    except Exception as e:
+                        self._logger.warn("unable to subscribe to [" + self.mqttStateTopic + "]")
+                        self._plugin_manager.send_plugin_message(self._identifier, dict(type="simple_notify",
+                                                                                        title="MQTT Chamber Temperature",
+                                                                                        text="Unable to subscribe to [" + self.mqttStateTopic + "].",
                                                                                         hide=True,
                                                                                         delay=10000,
                                                                                         notify_type="notice"))
             if "mqtt_unsubscribe" in helpers and self.mqtt_unsubscribe is None:
                 self.mqtt_unsubscribe = helpers["mqtt_unsubscribe"]
-                self._logger.debug("unsubscribe registered")
+                self._logger.debug("mqtt_unsubscribe registered")
 
-        if self.mqtt_subscribe is None or self.mqtt_unsubscribe is None:
+        if self.mqtt_publish is None or self.mqtt_subscribe is None or self.mqtt_unsubscribe is None:
             self._logger.warn("MQTT plugin does not appear to be installed")
 
             # need to rethink this
@@ -85,6 +130,12 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_settings_migrate(self, target, current):
         self._logger.debug("__init__: on_settings_migrate target=[{}] current=[{}]".format(target, current))
+        if current == None or current != target:
+            mqttTempTopic = self._settings.get(["mqttTopic"])
+            self._settings.remove(["mqttTopic"])
+            self._settings.set(["mqttTempTopic"], mqttTempTopic)
+            self._settings.save()
+            self._logger.info("Migrated to settings v%d from v%d", target, 1 if current == None else current)
 
 
     def on_settings_save(self, data):
@@ -93,9 +144,9 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
         # release our subscription and reload our config
-        if self.mqtt_unsubscribe and self.mqttTopic != "": 
+        if self.mqtt_unsubscribe and self.mqttTempTopic != "": 
             self.mqtt_unsubscribe(self.on_mqtt_subscription)
-            self._logger.debug("unsubscribed from [" + self.mqttTopic + "]")
+            self._logger.debug("unsubscribed from all topics")
 
         self.on_after_startup()
 
@@ -136,20 +187,49 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_mqtt_subscription(self, topic, message, retained=None, qos=None, *args, **kwargs):
         self._logger.debug("Received message for {topic}: {message}".format(**locals()))
-        temperature = float(message)
 
-        if self.convertFromFahrenheit:
-            temperature = (temperature - 32.0) / 1.8
+        if topic == self.mqttTempTopic:
+            temperature = float(message)
+            if self.convertFromFahrenheit:
+                temperature = (temperature - 32.0) / 1.8
 
-        self.last_chamber_temp = temperature
+            self.last_chamber_temp = round(temperature, 2)
+
+            if self.controlHeater:
+                if self.last_chamber_temp > self.last_chamber_temp_target and self.last_chamber_state == self.stateOnValue:
+                    if self.oneShotHeating: 
+                        self._printer.commands("M141 S0")
+                    else:
+                        self.mqtt_publish(self.mqttRequestedStateTopic, self.stateOffValue)
+                else:
+                    if not self.oneShotHeating and self.last_chamber_temp < self.last_chamber_temp_target - self.heaterHysteresis and self.last_chamber_state != self.stateOnValue:
+                        self.mqtt_publish(self.mqttRequestedStateTopic, self.stateOnValue)
+            return
+        
+        if topic == self.mqttStateTopic:
+            self.last_chamber_state = message.decode("utf-8")
+            self._logger.debug("last chamber state = [" + self.last_chamber_state + "]")
 
 
     def on_temperatures_received(self, comm, parsed_temps):
-        self._logger.debug("on_temperatures_received")
+        # self._logger.debug("on_temperatures_received: {}".format(parsed_temps))
         chamber = dict()
-        chamber["C"] = (self.last_chamber_temp, 0.0)
+        chamber["C"] = (self.last_chamber_temp, self.last_chamber_temp_target)
+
         parsed_temps.update(chamber)
+        # self._logger.debug("on_temperatures_received: {}".format(parsed_temps))
         return parsed_temps
+
+
+    def hook_gcode_sending(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+        if self.controlHeater and gcode == "M141":
+            self._logger.debug("__init__: hook_gcode_sending phase=[{}] cmd=[{}] cmd_type=[{}] gcode=[{}]".format(phase, cmd, cmd_type, gcode))
+            self.last_chamber_temp_target = float(cmd.replace("M141 S", ""))
+            if self.last_chamber_temp_target == 0.0:
+                self.mqtt_publish(self.mqttRequestedStateTopic, self.stateOffValue)
+            else:
+                self.mqtt_publish(self.mqttRequestedStateTopic, self.stateOnValue)
+            return (None, )
 
 
     def get_update_information(self):
@@ -189,4 +269,5 @@ def __plugin_load__():
     global __plugin_hooks__
     __plugin_hooks__ = \
         { "octoprint.comm.protocol.temperatures.received": __plugin_implementation__.on_temperatures_received,
+          "octoprint.comm.protocol.gcode.sending": __plugin_implementation__.hook_gcode_sending,
           "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information }

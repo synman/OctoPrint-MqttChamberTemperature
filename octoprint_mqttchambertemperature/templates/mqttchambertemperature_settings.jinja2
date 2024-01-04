@@ -28,11 +28,11 @@
 		<hr>
 	</div>
 	<div class="content">
-		<h5><b>Settings</b></h5>
+		<h5><b>Temperature Monitoring</b></h5>
 
 		<label class="control-label">Subscribed Topic</label>
 		<div class="controls">
-				<input type="text" class="input-mini" style="width: 500px" data-bind="value: settings.plugins.mqttchambertemperature.mqttTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+				<input type="text" class="input-mini" style="width: 500px" data-bind="value: settings.plugins.mqttchambertemperature.mqttTempTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
 		</div>
 
 		<br/>
@@ -42,6 +42,63 @@
 				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.convertFromFahrenheit"> Convert from Fahrenheit
 			</label>
 		</div>	
+
+		<br/>
+
+		<h5><b>Temperature Control</b></h5>
+
+		<div class="controls">
+			<label class="checkbox">
+				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.controlHeater"> Control Temperature
+			</label>
+		</div>	
+<!-- ko if: settings.plugins.mqttchambertemperature.controlHeater -->
+
+		<br/>
+
+		<label class="control-label">Current State Topic</label>
+		<div class="controls">
+			<input type="text" class="input-mini" style="width: 500px" data-bind="value: settings.plugins.mqttchambertemperature.mqttStateTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+		</div>
+
+		<br/>
+
+		<label class="control-label">Requested State Topic</label>
+		<div class="controls">
+			<input type="text" class="input-mini" style="width: 500px" data-bind="value: settings.plugins.mqttchambertemperature.mqttRequestedStateTopic, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+		</div>
+
+		<br/>
+
+		<label class="control-label">State ON Value</label>
+		<div class="controls">
+			<input type="text" class="input-mini" style="width: 70px" data-bind="value: settings.plugins.mqttchambertemperature.stateOnValue, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+		</div>
+
+		<br/>
+
+		<label class="control-label">State OFF Value</label>
+		<div class="controls">
+			<input type="text" class="input-mini" style="width: 70px" data-bind="value: settings.plugins.mqttchambertemperature.stateOffValue, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+		</div>
+
+		<br/>
+
+		<div class="controls">
+			<label class="checkbox">
+				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.oneShotHeating"> One Shot Heating (Sets Target to 0&deg; after target is reached)
+			</label>
+		</div>		
+	<!-- ko ifnot: settings.plugins.mqttchambertemperature.oneShotHeating -->
+
+		<br/>
+
+		<label class="control-label">Temperature Hysteresis</label>
+		<div class="controls">
+			<input type="text" class="input-mini" style="width: 50px" data-bind="numeric, value: settings.plugins.mqttchambertemperature.heaterHysteresis, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }"> &deg;
+		</div>
+	<!-- /ko -->
+<!-- /ko -->
 	</div>
 </div>
 </form>
