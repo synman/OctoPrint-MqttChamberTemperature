@@ -19,6 +19,6 @@
 * ESP8266/ESP32 BME280 - https://github.com/synman/BME280
 * ESP8266/ESP32 SHT30 & LCD - https://github.com/synman/SHT-Sensor
 
-## Power Plug Considerations
+## Heater and Power Plug Reference
 
-The easiest way to integration temperature control is by use of a Home Assistant integrated power plug such as the [TP-LINK HS103](https://www.tp-link.com/us/home-networking/smart-plug/hs103/) or similar.  Creating automations for managing the requested and actual state values via MQTT is then fairly trivial.
+The easiest way to manage temperature control is by use of a [miniature heater](https://www.amazon.com/dp/B07573FKSG) connected to a Home Assistant integrated power plug such as the [TP-LINK HS103](https://www.tp-link.com/us/home-networking/smart-plug/hs103/).  Creating automations for managing the requested and actual power state values via MQTT is then fairly trivial.
