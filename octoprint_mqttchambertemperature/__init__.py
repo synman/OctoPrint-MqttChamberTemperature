@@ -43,6 +43,8 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.stateOnValue = ""
         self.stateOffValue = ""
 
+        self._logger = logging.getLogger("octoprint.plugins.mqttchambertemperature")
+
     # #~~ SettingsPlugin mixin
     def get_settings_defaults(self):
         self._logger.debug("__init__: get_settings_defaults")
