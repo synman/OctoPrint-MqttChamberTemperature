@@ -9,7 +9,8 @@ from pydoc import Helper
 from octoprint.events import Events
 
 import octoprint.plugin
-
+import json
+from jsonpath_ng import jsonpath, parse
 
 class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
                               octoprint.plugin.TemplatePlugin,
@@ -43,6 +44,9 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.stateOnValue = ""
         self.stateOffValue = ""
 
+        self.parseJson = False
+        self.jsonPath = ""
+
     # #~~ SettingsPlugin mixin
     def get_settings_defaults(self):
         self._logger.debug("__init__: get_settings_defaults")
@@ -56,7 +60,9 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
             heaterHysteresis = 1.0,
             oneShotHeating = False,
             stateOnValue = "on",
-            stateOffValue = "off"
+            stateOffValue = "off",
+            parseJson = False,
+            jsonPath = ""
         )
 
     def on_after_startup(self):
@@ -73,6 +79,9 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
         self.stateOnValue = self._settings.get(["stateOnValue"])
         self.stateOffValue = self._settings.get(["stateOffValue"])
+
+        self.parseJson = self._settings.get_boolean(["parseJson"])
+        self.jsonPath = self._settings.get(["jsonPath"])
 
         helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe", "mqtt_unsubscribe")
 
@@ -189,7 +198,25 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.debug("Received message for {topic}: {message}".format(**locals()))
 
         if topic == self.mqttTempTopic:
-            temperature = float(message)
+            if self.parseJson:
+                if len(self.jsonPath) == 0:
+                    self._logger.error("It seems there is no jsonpath configured")
+                    return
+
+                jsonpath_expression = parse(self.jsonPath)
+
+                json_data = json.loads(message)                
+
+                match = jsonpath_expression.find(json_data)
+
+                if len(match) == 0:
+                    self._logger.error("The jsonpath {expr} does not match in {msg}".format(expr = self.jsonPath, msg = message))
+                    return
+
+                temperature = float(match[0].value))
+            else:
+                temperature = float(message)
+
             if self.convertFromFahrenheit:
                 temperature = (temperature - 32.0) / 1.8
 
