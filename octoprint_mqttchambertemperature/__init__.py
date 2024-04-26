@@ -213,7 +213,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
                     self._logger.error("The jsonpath {expr} does not match in {msg}".format(expr = self.jsonPath, msg = message))
                     return
 
-                temperature = float(match[0].value))
+                temperature = float(match[0].value)
             else:
                 temperature = float(message)
 
