@@ -45,6 +45,25 @@
 
 		<br/>
 
+		<h5><b>Parsing</b></h5>
+
+		<div class="controls">
+			<label class="checkbox">
+				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.parseJson"> Parse from JSON
+			</label>
+		</div>	
+
+<!-- ko if: settings.plugins.mqttchambertemperature.parseJson -->
+
+		<br/>
+
+		<label class="control-label">JSONPATH</label>
+		<div class="controls">
+			<input type="text" class="input-mini" style="width: 500px" data-bind="value: settings.plugins.mqttchambertemperature.jsonPath, event: { focus: function(d, e) {$root.handleFocus(e, 'target', $data)} }">
+		</div>
+		
+<!-- /ko -->
+
 		<h5><b>Temperature Control</b></h5>
 
 		<div class="controls">
