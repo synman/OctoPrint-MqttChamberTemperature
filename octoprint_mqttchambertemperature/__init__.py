@@ -7,6 +7,10 @@
 from __future__ import absolute_import
 from pydoc import Helper
 from octoprint.events import Events
+from octoprint.logging.handlers import CleaningTimedRotatingFileHandler
+
+import logging
+import logging.handlers
 
 import octoprint.plugin
 import json
@@ -46,6 +50,16 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
         self.parseJson = False
         self.jsonPath = ""
+
+    # _settings is not injected until after __init__, so the log file is set up here
+    def initialize(self):
+        self._logger.propagate = False
+
+        log_handler = CleaningTimedRotatingFileHandler(self._settings.get_plugin_logfile_path(), when="D", backupCount=3)
+        log_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+
+        self._logger.addHandler(log_handler)
+        self._logger.setLevel(logging.INFO)
 
     # #~~ SettingsPlugin mixin
     def get_settings_defaults(self):
