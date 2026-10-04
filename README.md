@@ -3,6 +3,8 @@
  
 * Requires the [MQTT](https://plugins.octoprint.org/plugins/mqtt/) Plugin to be installed and configured
 * Subcribed topic configurable via Plugin Settings
+* Enable heated chamber in the print profile
+* ![image](https://github.com/user-attachments/assets/fa2fa3de-dc2d-44c5-bfde-926c15a78a20)
 * Can convert retrieved temperature to Celcius if provided in Fahrenheit
 * Control enclosure temperature via MQTT state topics
 
