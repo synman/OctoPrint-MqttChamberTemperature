@@ -63,7 +63,8 @@ Promote an RC to stable when one real-hardware print with the change has behaved
    gh release create 0.0.4rc1 -R synman/OctoPrint-MqttChamberTemperature \
      --target rc --prerelease --title 0.0.4rc1 --generate-notes
    ```
-4. Repeat with `rc2`, `rc3` and so on as fixes land.
+4. Add a **Highlights** section to the release notes (`gh release edit <tag> --notes-file <file>`). `--generate-notes` lists merged pull requests only, so changes committed directly to `devel` are missing until you add them.
+5. Repeat with `rc2`, `rc3` and so on as fixes land.
 
 ### Stable
 
@@ -78,7 +79,7 @@ Promote an RC to stable when one real-hardware print with the change has behaved
    gh release create 0.0.4 -R synman/OctoPrint-MqttChamberTemperature \
      --target main --title 0.0.4 --generate-notes
    ```
-   `--generate-notes` produces the "What's Changed" list used by earlier releases.
+   `--generate-notes` produces the "What's Changed" list used by earlier releases. It covers merged pull requests only: add a **Highlights** section for direct commits, as for RCs.
 4. Bring `rc` up to `main` so the next RC push is a fast-forward:
    ```bash
    git push origin devel:rc
