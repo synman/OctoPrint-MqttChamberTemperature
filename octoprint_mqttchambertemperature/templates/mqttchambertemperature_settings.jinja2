@@ -107,7 +107,13 @@
 			<label class="checkbox">
 				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.oneShotHeating"> One Shot Heating (sets Target to 0&deg; after target is reached)
 			</label>
-		</div>		
+		</div>
+
+		<div class="controls">
+			<label class="checkbox">
+				<input type="checkbox" data-bind="checked: settings.plugins.mqttchambertemperature.heaterOffOnPrintEnd"> Turn Heater Off When Print Ends (done, failed or cancelled)
+			</label>
+		</div>
 	<!-- ko ifnot: settings.plugins.mqttchambertemperature.oneShotHeating -->
 
 		<br/>

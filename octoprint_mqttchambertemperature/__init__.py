@@ -44,6 +44,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.controlHeater = False
         self.heaterHysteresis = 0.0
         self.oneShotHeating = False
+        self.heaterOffOnPrintEnd = False
 
         self.stateOnValue = ""
         self.stateOffValue = ""
@@ -73,6 +74,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
             controlHeater = False,
             heaterHysteresis = 1.0,
             oneShotHeating = False,
+            heaterOffOnPrintEnd = False,
             stateOnValue = "on",
             stateOffValue = "off",
             parseJson = False,
@@ -90,6 +92,7 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
         self.controlHeater =  self._settings.get_boolean(["controlHeater"])
         self.heaterHysteresis = self._settings.get_float(["heaterHysteresis"])
         self.oneShotHeating = self._settings.get_boolean(["oneShotHeating"])
+        self.heaterOffOnPrintEnd = self._settings.get_boolean(["heaterOffOnPrintEnd"])
 
         self.stateOnValue = self._settings.get(["stateOnValue"])
         self.stateOffValue = self._settings.get(["stateOffValue"])
@@ -200,7 +203,14 @@ class MqttChamberTempPlugin(octoprint.plugin.SettingsPlugin,
 
     # #-- EventHandlerPlugin mix-in
     def on_event(self, event, payload):
-        pass
+        # pause is deliberately excluded -- a paused print resumes and expects a warm chamber
+        if event in (Events.PRINT_DONE, Events.PRINT_FAILED, Events.PRINT_CANCELLED):
+            if self.controlHeater and self.heaterOffOnPrintEnd and self.last_chamber_temp_target > 0.0:
+                self._logger.info("print ended [{}], turning chamber heater off".format(event))
+                # a cancel fires both PrintCancelled and PrintFailed -- zeroing now keeps the second from repeating this
+                self.last_chamber_temp_target = 0.0
+                # routed through hook_gcode_sending so the UI target updates and the off state is published
+                self._printer.commands("M141 S0")
 
 
     # ~ SimpleApiPlugin

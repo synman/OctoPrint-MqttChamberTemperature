@@ -7,6 +7,8 @@
 * ![image](https://github.com/user-attachments/assets/fa2fa3de-dc2d-44c5-bfde-926c15a78a20)
 * Can convert retrieved temperature to Celcius if provided in Fahrenheit
 * Control enclosure temperature via MQTT state topics
+* Optionally turn the heater off when a print ends (done, failed or cancelled) — enable "Turn Heater Off When Print Ends" under Temperature Control
+* Chamber temperature presets appear in OctoPrint's temperature profiles once heated chamber is enabled in the printer profile
 
 ## Screenshots
 
